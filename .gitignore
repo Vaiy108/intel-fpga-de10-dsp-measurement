@@ -1,0 +1,35 @@
+# --- Quartus Compilation / Tool Outputs ---
+db/
+incremental_db/
+simulation/
+greybox_tmp/
+hc_output/
+.qsys_edit/
+hps_isw_shared/
+sys_description.h
+output_files/
+
+# --- Extension specific junk ---
+*.bak
+*.orig
+*.rpt
+*.summary
+*.sof
+*.pof
+*.jdi
+*.pin
+*.qws
+*.done
+*.smsg
+*.ipinfo
+*.sld
+
+# --- ModelSim Simulation Outputs ---
+sim/work/
+sim/transcript
+sim/vsim.wlf
+sim/wave.vcd
+
+# --- Operating System Files ---
+.DS_Store
+Thumbs.db
