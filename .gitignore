@@ -29,6 +29,8 @@ sim/work/
 sim/transcript
 sim/vsim.wlf
 sim/wave.vcd
+*.wlf         
+*.ini     
 
 # --- Operating System Files ---
 .DS_Store
