@@ -58,7 +58,41 @@ The behavior of the synthesis block was tested within an file-I/O testbench driv
 
 ---
 
-## Upcoming Implementation Phases
-*   **Phase 3:** Wrapping the VHDL filter core in an Avalon-MM peripheral module structure.
-*   **Phase 4:** Compiling a complete Nios soft-core processor layout inside Intel Platform Designer.
-*   **Phase 5:** Generating low-level system C driver logic loops communicating via local JTAG UART connection channels to a local host PC terminal.
+---
+
+## Phase 3: System-on-Chip (SoC) Integration via Avalon-MM
+
+To interface the custom high-speed VHDL filter core with a soft-core processor environment, the DSP pipeline was wrapped inside an Intel Avalon Memory-Mapped (Avalon-MM) Slave peripheral structure. 
+
+### Core System Infrastructure
+An entire embedded processor system layout was assembled inside Intel Platform Designer (Qsys). The platform includes:
+*   **Soft-Core Processor:** Nios II/e (Economy core) configured to run at 50 MHz.
+*   **Volatile Memory Allocation:** 32 KB of On-Chip Dual-Port RAM configured for program code space and runtime variable caching.
+*   **Telemetry Interfaces:** Full hardware integration of standard industrial flight buses, including a 1 MHz **SPI Master**, an **I2C Master**, and a **JTAG UART** for zero-extra-hardware data telemetry communications loops directly over the physical USB program cable link back to a PC console.
+
+![Platform Designer System Interconnect Layout](hw/platform_designer_final_memory_map.png)
+
+### Address Space Alignment
+The system memory map was balanced to eliminate address boundaries arbitration overlap conflicts across the unified Avalon data matrix. The resulting structure registers are isolated into clean hex partitions:
+*   `onchip_memory2_0.s1` ➔ `0x0000_8000` to `0x0000_FFFF`
+*   `i2c_0.csr` ➔ `0x0001_1000` to `0x0001_103F`
+*   `spi_0.spi_control_port` ➔ `0x0001_1040` to `0x0001_105F`
+*   `jtag_uart_0.avalon_jtag_slave` ➔ `0x0001_1060` to `0x0001_1067`
+*   `fir_filter_avalon_0.avalon_slave_0` ➔ `0x0001_1068` to `0x0001_106F`
+
+---
+
+##  Phase 4: Top-Level Hardware Packaging
+The finalized Qsys system wrapper block was structurally linked inside a top-level structural design file (`hw/de10_top.vhd`). 
+
+The hardware outer block directly routes the physical FPGA board resources down into the soft CPU fabric pins:
+*   **`MAX10_CLK1_50` Pin** ➔ Routes the native physical crystal oscillator tracking speed straight into the global `clk_clk` line.
+*   **`KEY(0)` Push-Button** ➔ Extends a physical active-low manual clear line directly into the system `reset_reset_n` core.
+
+---
+
+## Upcoming Final Implementation Phases
+*   **Phase 5:** Generating automated system support headers (BSP) inside Nios II Software Build Tools.
+*   **Phase 6:** Building the low-level embedded C data tracking telemetry driver algorithms.
+
+

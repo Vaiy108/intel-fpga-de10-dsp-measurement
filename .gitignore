@@ -35,3 +35,22 @@ sim/wave.vcd
 # --- Operating System Files ---
 .DS_Store
 Thumbs.db
+
+# --- Platform Designer (Qsys) Generated Junk ---
+hardware/nios_system/
+hardware/.qsys_edit/
+*.qsys_edit
+*.sopcinfo
+*.cmap
+*.jdi
+*_generation_script.tcl
+*_generation.rpt
+*_assignment_defaults.qdf
+
+# --- Nios II Software Build Tools (Eclipse Workspace Junk) ---
+software/*/obj/
+software/*/bsp/
+software/.metadata/
+software/.recommenders/
+*.bsp
+
