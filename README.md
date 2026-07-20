@@ -70,7 +70,7 @@ An entire embedded processor system layout was assembled inside Intel Platform D
 *   **Volatile Memory Allocation:** 32 KB of On-Chip Dual-Port RAM configured for program code space and runtime variable caching.
 *   **Telemetry Interfaces:** Full hardware integration of standard industrial flight buses, including a 1 MHz **SPI Master**, an **I2C Master**, and a **JTAG UART** for zero-extra-hardware data telemetry communications loops directly over the physical USB program cable link back to a PC console.
 
-![Platform Designer System Interconnect Layout](hw/platform_designer_final_memory_map.png)
+![Platform Designer System Interconnect Layout](hardware/platform_designer_final_memory_map.png)
 
 ### Address Space Alignment
 The system memory map was balanced to eliminate address boundaries arbitration overlap conflicts across the unified Avalon data matrix. The resulting structure registers are isolated into clean hex partitions:
