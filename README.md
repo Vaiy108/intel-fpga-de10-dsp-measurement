@@ -89,6 +89,9 @@ The hardware outer block directly routes the physical FPGA board resources down 
 *   **`MAX10_CLK1_50` Pin** ➔ Routes the native physical crystal oscillator tracking speed straight into the global `clk_clk` line.
 *   **`KEY(0)` Push-Button** ➔ Extends a physical active-low manual clear line directly into the system `reset_reset_n` core.
 
+The Compilation was successful and it generated physical hardware programming bitstream file (de10_top.sof)
+![Quartus Prime Compilation and timing closure](hardware/qp_compilation.png)
+
 ---
 
 ## Upcoming Final Implementation Phases

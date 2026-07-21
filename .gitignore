@@ -54,3 +54,27 @@ software/.metadata/
 software/.recommenders/
 *.bsp
 
+# --- Quartus Full Compilation Outputs ---
+*.jdi
+*.sof
+*.pof
+*.ekp
+*.map
+*.txt
+*.summary
+*.qws
+*.done
+*.smsg
+*.pin
+*.chg
+*.qdf
+*.sld
+db/
+incremental_db/
+output_files/
+hc_output/
+
+# --- Platform Designer Hardware Synthesis Output Folder ---
+# This folder houses the thousands of auto-generated IP modules.
+# Your .qsys file is the only thing needed to recreate this.
+hardware/nios_system/
