@@ -23,6 +23,7 @@ output_files/
 *.smsg
 *.ipinfo
 *.sld
+*.do linguist-language=Tcl
 
 # --- ModelSim Simulation Outputs ---
 sim/work/
