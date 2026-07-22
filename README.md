@@ -2,9 +2,25 @@
 
 An end-to-end FPGA embedded system demonstrating hardware/software co-design using Intel Quartus Prime, Platform Designer (Qsys), Nios II, custom VHDL IP, MATLAB modelling and ModelSim verification.
 
-The project implements a hardware-accelerated FIR filter connected to a Nios II soft processor through an Avalon Memory-Mapped (Avalon-MM) interface, representing a realistic FPGA-based embedded measurement architecture suitable for instrumentation, signal processing and flight-test applications.
+The project implements a hardware-accelerated FIR filter connected to a Nios II soft processor through an Avalon Memory-Mapped (Avalon-MM) interface, representative of FPGA-based embedded architectures used in measurement, instrumentation, avionics, and real-time signal processing applications.
 
 ---
+
+## Key Skills Demonstrated
+
+- FPGA RTL Design (VHDL)
+- Intel Platform Designer (Qsys)
+- Avalon-MM Custom Peripheral Development
+- Embedded Software Development (Nios II)
+- Hardware/Software Co-design
+- MATLAB DSP Modelling
+- ModelSim Functional Verification
+- Quartus Prime Synthesis & Timing Closure
+- Memory-Mapped Embedded Systems
+- Digital Signal Processing
+
+---
+
 
 # Project Highlights
 
@@ -93,6 +109,10 @@ flowchart LR
 ```
 
 
+
+---
+
+![Platform Designer System Interconnect Layout](hardware/platform_designer_final_memory_map.png)
 
 ---
 
@@ -211,7 +231,6 @@ The embedded subsystem was assembled using Intel Platform Designer (Qsys). Durin
 
 The final design successfully generates the Platform Designer hardware description (`.sopcinfo`), enabling automatic Board Support Package (BSP) creation for the Nios II software environment.
 
-![Platform Designer System Interconnect Layout](hardware/platform_designer_final_memory_map.png)
 
 ---
 
