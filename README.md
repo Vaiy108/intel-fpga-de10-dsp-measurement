@@ -279,6 +279,14 @@ This confirms that the complete hardware platform—including the Nios II proces
 
 ---
 
+### FPGA Programming
+
+The generated FPGA configuration bitstream (`de10_top.sof`) was successfully programmed onto the Terasic DE10-Lite development board using the Intel USB-Blaster interface.
+
+![FPGA Programming Successful](hardware/fpga_programming_success.png)
+
+---
+
 
 # Verification Status
 
