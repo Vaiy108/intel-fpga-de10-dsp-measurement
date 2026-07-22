@@ -1,37 +1,133 @@
-# Intel FPGA DE10 DSP & Measurement Gateway
+# Intel FPGA DE10 Embedded DSP & Measurement System
 
-This repository contains an end-to-end Signal Processing and Embedded Telemetry system designed for the Intel Cyclone V SoC platform (DE10). The architecture integrates custom VHDL hardware acceleration, MATLAB mathematical modeling, ModelSim verification, and a soft-core processor subsystem interconnected via the Avalon Memory-Mapped (Avalon-MM) bus fabric.
+An end-to-end FPGA embedded system demonstrating hardware/software co-design using Intel Quartus Prime, Platform Designer (Qsys), Nios II, custom VHDL IP, MATLAB modelling and ModelSim verification.
 
-##  Project Overview & Architecture
-This project addresses the core competencies required for high-reliability flight dsp and measurement systems:
-*   **DSP Modeling & Verification:** Modeling noise-reduction filters and comparing implementation results directly against mathematical simulations.
-*   **Hardware Acceleration:** High-speed parallel hardware pipelines executing real-time arithmetic calculations in a synthesizable VHDL structure.
-*   **System-on-Chip (SoC) Integration:** Linking hardware modules with a microchip controller through standard vendor-agnostic system-level interconnect paths.
+The project implements a hardware-accelerated FIR filter connected to a Nios II soft processor through an Avalon Memory-Mapped (Avalon-MM) interface, representing a realistic FPGA-based embedded measurement architecture suitable for instrumentation, signal processing and flight-test applications.
 
 ---
 
-## Tools & Hardware Environment
+# Project Highlights
 
-### Software & Design Suites
-*   **Design & Synthesis:** Intel Quartus Prime Light Edition (v18.1 or later)
-*   **Verification & Simulation:** ModelSim - Intel FPGA Starter Edition
-*   **Mathematical Modeling:** MATLAB / GNU Octave (Fixed-Point Scripting)
-*   **Embedded Software Development:** Nios II Software Build Tools (SBT) for Eclipse
+✔ Custom VHDL FIR hardware accelerator
 
-### Hardware Platforms
-*   **Primary Deployment Target:** Terasic DE10-Lite / DE10-Standard (Intel Cyclone V SoC)
-*   **Cross-Platform Heritage:** Originally optimized for vendor-independent deployment (compatible with Xilinx Vivado & Arty S7 Spartan-7 reference boards)
+✔ Avalon-MM peripheral integration
+
+✔ Intel Platform Designer (Qsys)
+
+✔ Nios II Embedded Processor
+
+✔ Embedded C firmware
+
+✔ MATLAB DSP modelling
+
+✔ ModelSim functional verification
+
+✔ Quartus Prime synthesis & implementation
+
+✔ Hardware/Software Co-design
 
 ---
 
-## Repository Structure
-*   `mat/` — MATLAB verification modeling scripts and fixed-point input stimulation arrays.
-*   `sim/` — ModelSim testbench infrastructure, simulation scripts, and visual verification plots.
-*   `rtl/` — Fully synthesizable, vendor-independent VHDL logic processing blocks.
-*   `hw/` — *[In Progress]* Quartus Prime hardware templates and Platform Designer (Qsys) systems.
-*   `sw/` — *[In Progress]* Embedded C low-level control code and device integration firmware.
+# Hardware Platform
+
+**FPGA Board**
+
+- Terasic DE10-Lite
+- Intel MAX 10 FPGA (10M50DAF484C7G)
+
+**Development Tools**
+
+- Intel Quartus Prime Lite 18.1
+- Platform Designer (Qsys)
+- Nios II SBT for Eclipse
+- ModelSim Intel FPGA Edition
+- MATLAB / GNU Octave
 
 ---
+
+# System Architecture
+
+The design combines a Nios II soft processor, on-chip program memory, standard communication peripherals and a custom VHDL FIR accelerator inside one Platform Designer subsystem.
+
+The Nios II processor controls the measurement flow through the Avalon-MM interconnect. Raw samples are written to the custom FIR peripheral, processed in FPGA logic and read back by the embedded C application. Results are then sent to the host computer through the JTAG UART.
+
+```mermaid
+flowchart LR
+    HOST["Host PC<br/>Nios II SBT / JTAG Terminal"]
+
+    subgraph BOARD["Terasic DE10-Lite — Intel MAX 10 FPGA"]
+        CLK["50 MHz Board Clock<br/>MAX10_CLK1_50"]
+        RESET["Active-Low Reset<br/>KEY(0)"]
+
+        subgraph QSYS["Platform Designer / Qsys System"]
+            CPU["Nios II/e<br/>Soft Processor"]
+            BUS["Avalon-MM<br/>Interconnect Fabric"]
+            MEM["128 KB<br/>On-Chip Memory"]
+            JTAG["JTAG UART"]
+            SPI["SPI Master"]
+            I2C["I²C Master"]
+            FIR["Custom FIR Accelerator<br/>Avalon-MM Slave"]
+        end
+
+        TOP["Top-Level Wrapper<br/>de10_top.vhd"]
+    end
+
+    SENSOR_SPI["External SPI Sensor<br/>(Future Hardware Interface)"]
+    SENSOR_I2C["External I²C Sensor<br/>(Future Hardware Interface)"]
+
+    CLK --> TOP
+    RESET --> TOP
+    TOP --> CPU
+
+    CPU -->|Instruction and data access| BUS
+    BUS <--> MEM
+    BUS <--> JTAG
+    BUS <--> SPI
+    BUS <--> I2C
+    BUS <--> FIR
+
+    SPI -.-> SENSOR_SPI
+    I2C -.-> SENSOR_I2C
+
+    JTAG <--> HOST
+```
+
+
+
+---
+
+# Repository Structure
+
+```
+intel-fpga-de10-dsp-measurement
+
+├── hardware/
+│   ├── de10_top.vhd
+│   ├── de10_top.qpf
+│   ├── de10_top.qsf
+│   ├── nios_system.qsys
+│   ├── software/
+│   └── ...
+│
+├── rtl/
+│   ├── fir_filter.vhd
+│   └── fir_filter_avalon.vhd
+│
+├── sim/
+│   ├── fir_filter_tb.vhd
+│   ├── compile.do
+│   └── modelsim_waveform.png
+│
+├── mat/
+│   ├── input_signal.txt
+│   └── MATLAB scripts
+│
+└── README.md
+```
+
+---
+
+# Project Workflow
 
 ## Phase 1: MATLAB DSP Design
 A 4-tap Moving Average (Low-Pass) filter was chosen to clean a noisy low-frequency raw measurement telemetry data feed. 
@@ -41,14 +137,41 @@ A 4-tap Moving Average (Low-Pass) filter was chosen to clean a noisy low-frequen
 
 ---
 
-## Phase 2: VHDL Core Development & ModelSim Verification
-The computational core was constructed using standard synthesizable IEEE VHDL libraries.
+## Phase 1 – DSP Algorithm Development
 
-### Hardware Filtering Mechanics
-The incoming byte stream transitions through a 4-cycle arithmetic delay chain pipeline. The aggregated results are processed concurrently and divided instantaneously using a zero-latency arithmetic right bit-shift configuration (`shift_right` by 2 bits).
+A 4-tap moving-average FIR filter was first designed and verified in MATLAB using fixed-point arithmetic.
 
-### Simulation Results
-The behavior of the synthesis block was tested within an file-I/O testbench driving at a 50 MHz clock speed (`20 ns` period). 
+The generated input vectors are exported for HDL simulation to guarantee identical test conditions between software and hardware.
+
+---
+
+## Phase 2 – RTL Design
+
+The FIR filter was implemented in synthesizable VHDL.
+
+Features:
+
+- Fully synchronous design
+- Shift-register pipeline
+- Signed arithmetic
+- Fixed-point implementation
+- Vendor-independent RTL core
+
+---
+
+## Phase 3 – Functional Verification
+
+The RTL was verified using ModelSim.
+
+Verification includes:
+
+- File-based stimulus
+- 50 MHz clock
+- Waveform inspection
+- MATLAB comparison
+
+The output waveform demonstrates successful suppression of high-frequency noise while preserving the desired low-frequency signal.
+
 
 ![ModelSim Analog Waveform Verification](sim/modelsim_waveform.png)
 
@@ -60,64 +183,162 @@ The behavior of the synthesis block was tested within an file-I/O testbench driv
 
 ---
 
-## Phase 3: System-on-Chip (SoC) Integration via Avalon-MM
+## Phase 4 – FPGA Embedded System Integration
 
-To interface the custom high-speed VHDL filter core with a soft-core processor environment, the DSP pipeline was wrapped inside an Intel Avalon Memory-Mapped (Avalon-MM) Slave peripheral structure. 
+The FIR core is wrapped as a custom Avalon-MM peripheral and integrated into a complete Nios II embedded system using Intel Platform Designer.
 
-### Core System Infrastructure
-An entire embedded processor system layout was assembled inside Intel Platform Designer (Qsys). The platform includes:
-*   **Soft-Core Processor:** Nios II/e (Economy core) configured to run at 50 MHz.
-*   **Volatile Memory Allocation:** 32 KB of On-Chip Dual-Port RAM configured for program code space and runtime variable caching.
-*   **Telemetry Interfaces:** Full hardware integration of standard industrial flight buses, including a 1 MHz **SPI Master**, an **I2C Master**, and a **JTAG UART** for zero-extra-hardware data telemetry communications loops directly over the physical USB program cable link back to a PC console.
+System components include:
+
+- Nios II/e processor
+- 128 KB On-Chip RAM
+- SPI Master
+- I²C Master
+- JTAG UART
+- Custom FIR Hardware Accelerator
+
+The embedded processor accesses the FIR through memory-mapped registers over the Avalon bus.
+
+
+### Platform Designer Integration
+
+The embedded subsystem was assembled using Intel Platform Designer (Qsys). During development, the complete hardware platform was validated through successful:
+
+- Custom Avalon-MM IP packaging
+- Address-space allocation
+- Interrupt routing
+- BSP generation
+- Embedded software integration
+
+The final design successfully generates the Platform Designer hardware description (`.sopcinfo`), enabling automatic Board Support Package (BSP) creation for the Nios II software environment.
 
 ![Platform Designer System Interconnect Layout](hardware/platform_designer_final_memory_map.png)
 
-### Address Space Alignment
-The system memory map was balanced to eliminate address boundaries arbitration overlap conflicts across the unified Avalon data matrix. The resulting structure registers are isolated into clean hex partitions:
-*   `onchip_memory2_0.s1` ➔ `0x0000_8000` to `0x0000_FFFF`
-*   `i2c_0.csr` ➔ `0x0001_1000` to `0x0001_103F`
-*   `spi_0.spi_control_port` ➔ `0x0001_1040` to `0x0001_105F`
-*   `jtag_uart_0.avalon_jtag_slave` ➔ `0x0001_1060` to `0x0001_1067`
-*   `fir_filter_avalon_0.avalon_slave_0` ➔ `0x0001_1068` to `0x0001_106F`
+---
+
+# Embedded Software
+
+A bare-metal Embedded C application performs:
+
+1. Sensor data acquisition (simulated)
+2. Writing samples to the FIR hardware accelerator
+3. Reading filtered output
+4. Sending results through JTAG UART
+
+The software communicates with the hardware accelerator using standard Avalon memory-mapped register access:
+
+- `IOWR_32DIRECT`
+- `IORD_32DIRECT`
 
 ---
 
-##  Phase 4: Top-Level Hardware Packaging
-The finalized Qsys system wrapper block was structurally linked inside a top-level structural design file (`hw/de10_top.vhd`). 
+## Phase 5 – FPGA Implementation & Top-Level Integration
 
-The hardware outer block directly routes the physical FPGA board resources down into the soft CPU fabric pins:
-*   **`MAX10_CLK1_50` Pin** ➔ Routes the native physical crystal oscillator tracking speed straight into the global `clk_clk` line.
-*   **`KEY(0)` Push-Button** ➔ Extends a physical active-low manual clear line directly into the system `reset_reset_n` core.
+The complete Platform Designer system was integrated into the top-level FPGA design (`de10_top.vhd`), connecting the embedded processor subsystem with the physical resources of the DE10-Lite development board.
 
-The Compilation was successful and it generated physical hardware programming bitstream file (de10_top.sof)
-![Quartus Prime Compilation and timing closure](hardware/qp_compilation.png)
+### Top-Level Hardware Connections
+
+The design exposes the Nios II system to the FPGA pins through the top-level structural wrapper:
+
+| FPGA Resource | Connected Signal |
+|--------------|------------------|
+| `MAX10_CLK1_50` | System clock (`clk_clk`) |
+| `KEY(0)` | Active-low system reset (`reset_reset_n`) |
+
+The Quartus Prime project was successfully synthesized, placed and routed without timing violations, generating the final FPGA configuration bitstream (`de10_top.sof`) for hardware deployment.
+
+### Quartus Prime Compilation
+
+- RTL Analysis & Synthesis ✔
+- Fitter ✔
+- Timing Analysis ✔
+- Assembler ✔
+- Programming File Generation (`de10_top.sof`) ✔
+
+![Quartus Prime Compilation](hardware/qp_compilation.png)
+
+This confirms that the complete hardware platform—including the Nios II processor, Platform Designer subsystem, custom Avalon-MM FIR accelerator and peripheral interfaces—was successfully implemented on the Intel MAX 10 FPGA.
 
 ---
 
 
-## Phase 5: Embedded C Software Architecture
+# Verification Status
 
-A low-level, bare-metal C application was constructed inside the Nios II Software Build Tools (SBT) environment to drive the telemetry gateway system.
-
-### Data Routing Mechanics
-The control algorithm manages a serialized runtime schedule to capture sensor data streams, isolate volatile fluctuations, and dispatch clean values back to a PC host console:
-1.  **Telemetry Capture:** Simulates high-reliability telemetry polling over the active 1 MHz SPI Master subsystem.
-2.  **Hardware Acceleration:** Writes raw sensor values directly across the Avalon Memory-Mapped bus fabric into the custom `fir_filter_avalon_0` hardware registers using `IOWR_32DIRECT`.
-3.  **Pipeline Synchronization:** Executes an embedded assembly fence instruction (`asm("nop")`) to guarantee that concurrent VHDL execution blocks finalize arithmetic calculations prior to a memory fetch.
-4.  **Data Dispatch:** Reads the stabilized telemetry stream from the status registers using `IORD_32DIRECT` and routes the arrays over the JTAG UART link back to the host computer diagnostic terminal.
+| Item | Status |
+|-------|--------|
+| MATLAB Model | ✅ |
+| VHDL RTL | ✅ |
+| ModelSim Simulation | ✅ |
+| Avalon-MM Wrapper | ✅ |
+| Platform Designer Integration | ✅ |
+| BSP Generation | ✅ |
+| Embedded C Build | ✅ |
+| Quartus Compilation | ✅ |
+| FPGA Programming | tba |
+| Hardware Validation | tba |
 
 ---
 
-## Verification & System Run Instructions
+# Build Instructions
 
-### Prerequisites
-*   Intel Quartus Prime Light Edition v18.1
-*   ModelSim - Intel FPGA Starter Edition
+## RTL Simulation
 
-### Execution Steps
-1.  **Simulation & Verification:** Open ModelSim, change the working directory to `/sim`, and execute `do compile.do`. This compiles the file-I/O testbench and plots the raw vs. filtered waveforms using the Analog Waveform Viewer to visually prove noise-rejection logic.
-2.  **Hardware Synthesis:** Open Quartus Prime, load `hardware/de10_top.qpf`, and trigger a **Full Compilation**. This passes the design through synthesis, placement-and-routing, and timing closure to output the physical programming bitstream (`de10_top.sof`).
-3.  **Firmware Compilation:** Launch the Nios II Software Build Tools (Eclipse) targeting the `/software` directory. Import the `nios_system.sopcinfo` hardware description manifest to generate the Board Support Package (BSP), then run a project build to generate the final execution binary file (`.elf`).
+```
+cd sim
+do compile.do
+```
 
+---
+
+## FPGA Compilation
+
+Open
+
+```
+hardware/de10_top.qpf
+```
+
+Compile using Quartus Prime.
+
+---
+
+## Embedded Software
+
+1. Generate BSP
+2. Build firmware
+3. Download `.elf`
+4. Execute through JTAG UART
+
+---
+
+# Future Improvements
+
+- Hardware validation using the DE10-Lite board
+- Real SPI sensor interface
+- I²C sensor integration
+- Interrupt-driven firmware
+- DMA support
+- Performance benchmarking
+- Fixed-point coefficient optimization
+
+---
+
+# Engineering Skills Demonstrated
+
+- FPGA Design (VHDL)
+- Embedded Systems
+- Hardware/Software Co-design
+- Digital Signal Processing
+- Avalon-MM Bus Integration
+- Intel Platform Designer
+- Nios II Embedded Development
+- MATLAB Verification
+- ModelSim Verification
+- Quartus Prime FPGA Development
+
+---
+
+# License
+
+MIT License
 
 
