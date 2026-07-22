@@ -94,8 +94,30 @@ The Compilation was successful and it generated physical hardware programming bi
 
 ---
 
-## Upcoming Final Implementation Phases
-*   **Phase 5:** Generating automated system support headers (BSP) inside Nios II Software Build Tools.
-*   **Phase 6:** Building the low-level embedded C data tracking telemetry driver algorithms.
+
+## Phase 5: Embedded C Software Architecture
+
+A low-level, bare-metal C application was constructed inside the Nios II Software Build Tools (SBT) environment to drive the telemetry gateway system.
+
+### Data Routing Mechanics
+The control algorithm manages a serialized runtime schedule to capture sensor data streams, isolate volatile fluctuations, and dispatch clean values back to a PC host console:
+1.  **Telemetry Capture:** Simulates high-reliability telemetry polling over the active 1 MHz SPI Master subsystem.
+2.  **Hardware Acceleration:** Writes raw sensor values directly across the Avalon Memory-Mapped bus fabric into the custom `fir_filter_avalon_0` hardware registers using `IOWR_32DIRECT`.
+3.  **Pipeline Synchronization:** Executes an embedded assembly fence instruction (`asm("nop")`) to guarantee that concurrent VHDL execution blocks finalize arithmetic calculations prior to a memory fetch.
+4.  **Data Dispatch:** Reads the stabilized telemetry stream from the status registers using `IORD_32DIRECT` and routes the arrays over the JTAG UART link back to the host computer diagnostic terminal.
+
+---
+
+## Verification & System Run Instructions
+
+### Prerequisites
+*   Intel Quartus Prime Light Edition v18.1
+*   ModelSim - Intel FPGA Starter Edition
+
+### Execution Steps
+1.  **Simulation & Verification:** Open ModelSim, change the working directory to `/sim`, and execute `do compile.do`. This compiles the file-I/O testbench and plots the raw vs. filtered waveforms using the Analog Waveform Viewer to visually prove noise-rejection logic.
+2.  **Hardware Synthesis:** Open Quartus Prime, load `hardware/de10_top.qpf`, and trigger a **Full Compilation**. This passes the design through synthesis, placement-and-routing, and timing closure to output the physical programming bitstream (`de10_top.sof`).
+3.  **Firmware Compilation:** Launch the Nios II Software Build Tools (Eclipse) targeting the `/software` directory. Import the `nios_system.sopcinfo` hardware description manifest to generate the Board Support Package (BSP), then run a project build to generate the final execution binary file (`.elf`).
+
 
 
