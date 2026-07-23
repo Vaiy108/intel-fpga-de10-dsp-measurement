@@ -291,7 +291,7 @@ and executed from on-chip memory. The hardware test successfully verified:
 ### Pin Planner
 The custom Nios II SoC was synthesized for the Intel MAX10 (10M50DAF484C7G) FPGA on the DE10-Lite development board. Quartus Pin Planner was used to verify the board pin assignments, including the 50 MHz system clock (MAX10_CLK1_50) and the reset push-button (KEY[0]), before hardware programming.
 
-![Pin Planner](de10_pin_planner.png)
+![Pin Planner](hardware/de10_pin_planner.png)
 
 ### Quartus Prime Compilation
 
