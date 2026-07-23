@@ -476,3 +476,8 @@ Compile using Quartus Prime.
 MIT License
 
 
+## Author
+**Vasan Iyer**  
+Embedded avionics engineer
+Focus: VHDL, FPGA Digital Design, Xilinx ISE, Signal Processing  
+GitHub: https://github.com/Vaiy108
