@@ -129,7 +129,7 @@ flowchart LR
 
 ---
 
-## Related Project
+## Companion Project
 
 This hardware/software co-design platform is being extended in the companion repository:
 
