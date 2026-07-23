@@ -1,5 +1,6 @@
 # --- Quartus Compilation / Tool Outputs ---
 db/
+hardware/db/
 incremental_db/
 simulation/
 greybox_tmp/
@@ -8,6 +9,9 @@ hc_output/
 hps_isw_shared/
 sys_description.h
 output_files/
+greybox/
+synthesis/
+
 
 # --- Extension specific junk ---
 *.bak
@@ -38,10 +42,8 @@ sim/wave.vcd
 Thumbs.db
 
 # --- Platform Designer (Qsys) Generated Junk ---
-hardware/nios_system/
 hardware/.qsys_edit/
 *.qsys_edit
-*.sopcinfo
 *.cmap
 *.jdi
 *_generation_script.tcl
@@ -75,14 +77,6 @@ incremental_db/
 output_files/
 hc_output/
 
-# --- Platform Designer Hardware Synthesis Output Folder ---
-# This folder houses the thousands of auto-generated IP modules.
-# .qsys file is the only thing needed to recreate this.
-hardware/nios_system/
-
-
-# --- Nios II Software Build Objects & Eclipse Workspace (All Paths) ---
-
 
 # Catch metadata tracking inside both software folder locations
 .metadata/
@@ -97,6 +91,15 @@ hardware/software/*_bsp/
 # Ignore temporary binary compilation folders
 software/*/obj/
 hardware/software/*/obj/
+# Platform Designer generated folders
+hardware/nios_system/greybox/
+hardware/nios_system/synthesis/
+
+# Platform Designer generation reports
+hardware/nios_system/*generation*.rpt
+
+# Eclipse workspace
+software/
 
 # Remove binary junk
 *.elf

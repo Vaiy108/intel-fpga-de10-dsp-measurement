@@ -279,14 +279,95 @@ This confirms that the complete hardware platform—including the Nios II proces
 
 ---
 
+## Hardware Validation
+
+The complete FPGA system was synthesized and deployed on the Intel
+DE10-Lite MAX 10 development board.
+
+The Nios II application was downloaded through the USB-Blaster interface
+and executed from on-chip memory. The hardware test successfully verified:
+
+- Nios II processor execution
+- JTAG UART communication
+- SPI master initialization
+- I²C controller initialization
+- Avalon-MM FIR accelerator access
+- Telemetry data processing and console output
+
 ### FPGA Programming
 
 The generated FPGA configuration bitstream (`de10_top.sof`) was successfully programmed onto the Terasic DE10-Lite development board using the Intel USB-Blaster interface.
 
 ![FPGA Programming Successful](hardware/fpga_programming_success.png)
 
+
+
 ---
 
+## Hardware Validation and FIR Debugging
+
+The complete telemetry-processing pipeline was validated on the DE10-Lite FPGA using a Nios II processor, a custom Avalon-MM FIR peripheral, and the JTAG UART console.
+
+### Nios II Hardware Execution
+
+#### Initial hardware result
+
+During the first hardware test, the reported filtered output closely followed the raw telemetry input.
+
+
+![Initial FIR hardware output](hardware/nios2_hardware_execution1.png)
+
+This revealed that the FIR pipeline was being updated on every 50 MHz FPGA clock cycle, while the Nios II processor supplied a new telemetry sample only once every 10 ms.
+
+As a result, the same input value was shifted repeatedly through all FIR taps before the next software sample arrived. Once all taps contained the same value, the moving-average output became approximately equal to the raw input.
+
+#### Sample-valid correction
+
+The Avalon wrapper was modified to generate a one-clock-cycle `sample_valid` pulse whenever Nios II writes a new telemetry value to the FIR input register.
+
+The FIR shift register and accumulation logic were then enabled only when `sample_valid = '1'`.
+
+This ensured that the hardware filter advanced once per telemetry sample rather than once per FPGA clock cycle.
+
+### Corrected hardware result
+
+After recompiling the FPGA design and programming the updated `.sof` file, the filtered output became visibly smoother and delayed relative to the raw telemetry.
+
+![FIR output after sample-valid correction](hardware/nios2_hardware_execution2.png)
+
+The result confirms that:
+
+- Nios II successfully writes telemetry through Avalon-MM.
+- The custom FIR peripheral receives one valid update per software sample.
+- The filter smooths rapid changes in the input signal.
+- The output retains the expected memory of previous samples.
+- The complete software-to-hardware telemetry path operates successfully on the FPGA.
+
+### Remaining pipeline-latency refinement
+
+The corrected output still contains additional sample latency caused by two synchronous VHDL behaviors:
+
+1. The FIR accumulation uses the previous contents of the shift-register signals.
+2. The registered output uses the previous value of the registered sum signal.
+
+The next refinement removes these unnecessary sample delays by computing the moving average from the current input sample and the three previous samples in the same valid clock event.
+
+This provides a useful demonstration of iterative FPGA debugging: first correcting the sampling rate, then refining pipeline timing and data alignment.
+
+### Hardware Bring-Up Note
+
+During initial hardware testing, the Nios II processor could be detected
+through JTAG but did not respond to ELF downloads. The issue was traced to
+missing physical pin assignments for the 50 MHz board clock and reset
+pushbutton.
+
+The final assignments were:
+
+- `MAX10_CLK1_50` → `PIN_P11`
+- `KEY[0]` → `PIN_B8`
+
+After recompilation and reprogramming, the Nios II application executed
+successfully on hardware.
 
 # Verification Status
 
