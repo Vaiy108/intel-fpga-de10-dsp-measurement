@@ -1,10 +1,20 @@
 # Intel FPGA DE10 Embedded DSP & Measurement System
 
-An end-to-end FPGA embedded system demonstrating hardware/software co-design using Intel Quartus Prime, Platform Designer (Qsys), Nios II, custom VHDL IP, MATLAB modelling and ModelSim verification.
+An end-to-end FPGA embedded system demonstrating FPGA Hardware/Software Co-Design using Intel Quartus Prime, Platform Designer (Qsys), Nios II, custom VHDL IP, MATLAB modelling and ModelSim verification.
 
 The project implements a hardware-accelerated FIR filter connected to a Nios II soft processor through an Avalon Memory-Mapped (Avalon-MM) interface, representative of FPGA-based embedded architectures used in measurement, instrumentation, avionics, and real-time signal processing applications.
 
----
+
+
+**Highlights**
+
+ - Custom Avalon-MM FPGA peripheral
+ - Nios II embedded processor integration
+ - 4-tap FIR hardware accelerator
+ - MATLAB → VHDL → ModelSim → FPGA validation flow
+ - Successfully deployed on Terasic DE10-Lite (Intel MAX 10)
+
+ ---
 
 ## Key Skills Demonstrated
 
@@ -12,7 +22,7 @@ The project implements a hardware-accelerated FIR filter connected to a Nios II 
 - Intel Platform Designer (Qsys)
 - Avalon-MM Custom Peripheral Development
 - Embedded Software Development (Nios II)
-- Hardware/Software Co-design
+- FPGA Hardware/Software Co-Design
 - MATLAB DSP Modelling
 - ModelSim Functional Verification
 - Quartus Prime Synthesis & Timing Closure
@@ -38,9 +48,9 @@ The project implements a hardware-accelerated FIR filter connected to a Nios II 
 
 ✔ ModelSim functional verification
 
-✔ Quartus Prime synthesis & implementation
+✔ Quartus Prime synthesis, fitting and timing closure
 
-✔ Hardware/Software Co-design
+✔ FPGA Hardware/Software Co-Design
 
 ---
 
@@ -50,6 +60,8 @@ The project implements a hardware-accelerated FIR filter connected to a Nios II 
 
 - Terasic DE10-Lite
 - Intel MAX 10 FPGA (10M50DAF484C7G)
+![Terasic DE10-Lite FPGA board](hardware/de10_fpga_hardware.jpg)
+
 
 **Development Tools**
 
@@ -149,15 +161,11 @@ intel-fpga-de10-dsp-measurement
 
 # Project Workflow
 
-## Phase 1: MATLAB DSP Design
+## Phase 1 – DSP Algorithm Development
 A 4-tap Moving Average (Low-Pass) filter was chosen to clean a noisy low-frequency raw measurement telemetry data feed. 
 *   The raw test wave signal was structured to integrate a continuous clean wave combined with highly volatile high-frequency signal interference.
 *   Values were fully quantized into signed 8-bit fixed-point vectors (`-128` to `127`) to mirror identical physical constraints inside the digital logic fabric.
 *   Test parameters were subsequently serialized into `mat/input_signal.txt` for integration into testbench environments.
-
----
-
-## Phase 1 – DSP Algorithm Development
 
 A 4-tap moving-average FIR filter was first designed and verified in MATLAB using fixed-point arithmetic.
 
@@ -265,21 +273,7 @@ The design exposes the Nios II system to the FPGA pins through the top-level str
 
 The Quartus Prime project was successfully synthesized, placed and routed without timing violations, generating the final FPGA configuration bitstream (`de10_top.sof`) for hardware deployment.
 
-### Quartus Prime Compilation
-
-- RTL Analysis & Synthesis ✔
-- Fitter ✔
-- Timing Analysis ✔
-- Assembler ✔
-- Programming File Generation (`de10_top.sof`) ✔
-
-![Quartus Prime Compilation](hardware/qp_compilation.png)
-
-This confirms that the complete hardware platform—including the Nios II processor, Platform Designer subsystem, custom Avalon-MM FIR accelerator and peripheral interfaces—was successfully implemented on the Intel MAX 10 FPGA.
-
----
-
-## Hardware Validation
+## Hardware Bring-Up
 
 The complete FPGA system was synthesized and deployed on the Intel
 DE10-Lite MAX 10 development board.
@@ -294,44 +288,63 @@ and executed from on-chip memory. The hardware test successfully verified:
 - Avalon-MM FIR accelerator access
 - Telemetry data processing and console output
 
+### Pin Planner
+The custom Nios II SoC was synthesized for the Intel MAX10 (10M50DAF484C7G) FPGA on the DE10-Lite development board. Quartus Pin Planner was used to verify the board pin assignments, including the 50 MHz system clock (MAX10_CLK1_50) and the reset push-button (KEY[0]), before hardware programming.
+
+![Pin Planner](de10_pin_planner.png)
+
+### Quartus Prime Compilation
+
+- RTL Analysis & Synthesis ✔
+- Fitter ✔
+- Timing Analysis ✔
+- Assembler ✔
+- Programming File Generation (`de10_top.sof`) ✔
+
+![Quartus Prime Compilation](hardware/qp_compilation.png)
+
+This confirms that the complete hardware platform—including the Nios II processor, Platform Designer subsystem, custom Avalon-MM FIR accelerator and peripheral interfaces—was successfully implemented on the Intel MAX 10 FPGA.
+
+
 ### FPGA Programming
 
 The generated FPGA configuration bitstream (`de10_top.sof`) was successfully programmed onto the Terasic DE10-Lite development board using the Intel USB-Blaster interface.
 
 ![FPGA Programming Successful](hardware/fpga_programming_success.png)
 
-
-
 ---
 
-## Hardware Validation and FIR Debugging
+## Hardware Validation and FIR Debugging - Nios II Hardware Execution
 
 The complete telemetry-processing pipeline was validated on the DE10-Lite FPGA using a Nios II processor, a custom Avalon-MM FIR peripheral, and the JTAG UART console.
 
-### Nios II Hardware Execution
+### Stage 1 – Initial Hardware Integration
 
-#### Initial hardware result
+#### Problem
+
+The filtered output was identical to the raw telemetry.
+
+#### Root Cause
+
+The FIR filter shifted at the 50 MHz FPGA clock, while new telemetry samples arrived only every 10 ms from the Nios II processor. Between two software writes, the same sample propagated through every tap, causing the moving average to converge to the current sample.
+
+#### Hardware Result
 
 During the first hardware test, the reported filtered output closely followed the raw telemetry input.
 
-
 ![Initial FIR hardware output](hardware/nios2_hardware_execution1.png)
-
-This revealed that the FIR pipeline was being updated on every 50 MHz FPGA clock cycle, while the Nios II processor supplied a new telemetry sample only once every 10 ms.
 
 As a result, the same input value was shifted repeatedly through all FIR taps before the next software sample arrived. Once all taps contained the same value, the moving-average output became approximately equal to the raw input.
 
-#### Sample-valid correction
+### Stage 2 – Avalon-Controlled Sampling
 
-The Avalon wrapper was modified to generate a one-clock-cycle `sample_valid` pulse whenever Nios II writes a new telemetry value to the FIR input register.
+A sample_valid signal was introduced (in Avalon wrapper) so the FIR shifted only when the Avalon-MM interface received a new telemetry sample.
 
 The FIR shift register and accumulation logic were then enabled only when `sample_valid = '1'`.
 
-This ensured that the hardware filter advanced once per telemetry sample rather than once per FPGA clock cycle.
+This synchronized the FIR update rate with the software sampling rate.
 
-### Corrected hardware result
-
-After recompiling the FPGA design and programming the updated `.sof` file, the filtered output became visibly smoother and delayed relative to the raw telemetry.
+The moving average became mathematically correct, although the output still showed a small pipeline delay because only the previous register contents were used in the accumulation.
 
 ![FIR output after sample-valid correction](hardware/nios2_hardware_execution2.png)
 
@@ -343,22 +356,35 @@ The result confirms that:
 - The output retains the expected memory of previous samples.
 - The complete software-to-hardware telemetry path operates successfully on the FPGA.
 
-### Remaining pipeline-latency refinement
+### Stage 3 – Pipeline Latency Refinement
 
-The corrected output still contains additional sample latency caused by two synchronous VHDL behaviors:
+The FIR datapath was refined so that each output sample is computed from the current input together with the previous three stored samples, eliminating an unnecessary one-sample pipeline delay while preserving the 4-tap moving-average architecture.
 
-1. The FIR accumulation uses the previous contents of the shift-register signals.
-2. The registered output uses the previous value of the registered sum signal.
+```
+Current sample + Previous 3 samples
+```
+instead of waiting for the current sample to propagate through the register pipeline.
 
-The next refinement removes these unnecessary sample delays by computing the moving average from the current input sample and the three previous samples in the same valid clock event.
+This removed the unnecessary one-sample computation delay while preserving the synchronous FPGA implementation and the 4-tap FIR architecture.
 
-This provides a useful demonstration of iterative FPGA debugging: first correcting the sampling rate, then refining pipeline timing and data alignment.
+The resulting hardware output responds immediately to new telemetry while maintaining the expected smoothing behaviour.
+
+![FIR output after pipeline-latency refinement](hardware/nios2_hardware_execution3.png)
+
+### What this project demonstrates
+- Custom Avalon-MM peripheral development
+- Intel Platform Designer (Qsys) IP integration
+- Nios II FPGA Hardware/Software Co-Design
+- RTL implementation of a synchronous 4-tap FIR filter
+- FPGA timing-aware debugging
+- Hardware validation on the DE10-Lite platform
+- Incremental debugging from initial implementation to optimized hardware
 
 ### Hardware Bring-Up Note
 
 During initial hardware testing, the Nios II processor could be detected
 through JTAG but did not respond to ELF downloads. The issue was traced to
-missing physical pin assignments for the 50 MHz board clock and reset
+missing top-level FPGA pin assignments for the 50 MHz board clock and reset
 pushbutton.
 
 The final assignments were:
@@ -381,8 +407,8 @@ successfully on hardware.
 | BSP Generation | ✅ |
 | Embedded C Build | ✅ |
 | Quartus Compilation | ✅ |
-| FPGA Programming | tba |
-| Hardware Validation | tba |
+| FPGA Programming | ✅ |
+| Hardware Validation | ✅ |
 
 ---
 
@@ -420,13 +446,13 @@ Compile using Quartus Prime.
 
 # Future Improvements
 
-- Hardware validation using the DE10-Lite board
 - Real SPI sensor interface
 - I²C sensor integration
 - Interrupt-driven firmware
 - DMA support
 - Performance benchmarking
 - Fixed-point coefficient optimization
+- AXI4-Lite wrapper for Xilinx portability
 
 ---
 
@@ -434,7 +460,7 @@ Compile using Quartus Prime.
 
 - FPGA Design (VHDL)
 - Embedded Systems
-- Hardware/Software Co-design
+- FPGA Hardware/Software Co-Design
 - Digital Signal Processing
 - Avalon-MM Bus Integration
 - Intel Platform Designer

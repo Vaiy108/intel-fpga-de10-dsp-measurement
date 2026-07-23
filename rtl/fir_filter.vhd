@@ -25,6 +25,7 @@ architecture rtl of fir_filter is
 begin
 
     process(clk)
+        variable current_sum : signed(9 downto 0);
     begin
         if rising_edge(clk) then
 
@@ -35,22 +36,26 @@ begin
 
             elsif sample_valid = '1' then
 
-                -- Shift register only when a new sample is written
-                pipe(0) <= signed(data_in);
-                pipe(1) <= pipe(0);
-                pipe(2) <= pipe(1);
-                pipe(3) <= pipe(2);
+                -- Current input plus the previous three samples
+                current_sum :=
+                      resize(signed(data_in), 10)
+                    + resize(pipe(0), 10)
+                    + resize(pipe(1), 10)
+                    + resize(pipe(2), 10);
 
-                -- Sum the four FIR taps
-                sum <= resize(pipe(0), 10)
-                     + resize(pipe(1), 10)
-                     + resize(pipe(2), 10)
-                     + resize(pipe(3), 10);
+                -- Keep registered sum for visibility/debugging
+                sum <= current_sum;
 
-                -- Divide by 4 using arithmetic right shift by 2 bits
+                -- Output the corresponding 4-sample average immediately
                 data_out <= std_logic_vector(
-                    resize(shift_right(sum, 2), 8)
+                    resize(shift_right(current_sum, 2), 8)
                 );
+
+                -- Shift sample history
+                pipe(3) <= pipe(2);
+                pipe(2) <= pipe(1);
+                pipe(1) <= pipe(0);
+                pipe(0) <= signed(data_in);
 
             end if;
         end if;
