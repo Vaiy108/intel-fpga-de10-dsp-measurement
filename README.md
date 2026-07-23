@@ -16,6 +16,7 @@ The project implements a hardware-accelerated FIR filter connected to a Nios II 
 
  ---
 
+
 ## Key Skills Demonstrated
 
 - FPGA RTL Design (VHDL)
@@ -125,6 +126,18 @@ flowchart LR
 ---
 
 ![Platform Designer System Interconnect Layout](hardware/platform_designer_final_memory_map.png)
+
+---
+
+## Related Project
+
+This hardware/software co-design platform is being extended in the companion repository:
+
+**FPGA Flight Measurement Gateway**
+
+https://github.com/Vaiy108/fpga-flight-measurement-gateway
+
+The companion project develops reusable FPGA measurement-system components including deterministic timestamping, structured measurement records, FIFO buffering, diagnostics, and scalable acquisition interfaces for avionics and real-time instrumentation systems.
 
 ---
 
